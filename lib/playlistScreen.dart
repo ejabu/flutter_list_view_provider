@@ -8,10 +8,17 @@ class PlaylistScreen extends StatefulWidget {
 }
 
 class _PlaylistScreenState extends State<PlaylistScreen> {
-  final _searchTextCtrl = TextEditingController();
   List _playlistList;
   String _errorMessage;
   Stage _stage;
+
+  final _searchTextCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    super.dispose();
+    _searchTextCtrl.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -22,16 +29,10 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     _errorMessage = videosState.errorMessage;
   }
 
-  @override
-  void dispose() {
-    _searchTextCtrl.dispose();
-    super.dispose();
-  }
-
   void actionSearch() {
-    String value = _searchTextCtrl.value.text;
+    String text = _searchTextCtrl.value.text;
     Provider.of<VideosProvider>(context, listen: false)
-        .updateCurrentVideoId(value);
+        .updateCurrentVideoId(text);
   }
 
   @override
@@ -47,7 +48,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
             Container(
               child: RaisedButton.icon(
                 icon: Icon(Icons.search),
-                label: Text("Filter Videos"),
+                label: Text("Filter"),
                 onPressed: () {
                   actionSearch();
                 },
@@ -65,20 +66,15 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                 ),
               ),
             ),
-            _stage == Stage.DONE
-                ? Flexible(
-                    child: ListView.builder(
-                      itemCount: _playlistList.length,
-                      itemBuilder: (context, index) {
-                        return PlaylistTreeItem(_playlistList[index]);
-                      },
-                    ),
-                  )
-                : _stage == Stage.ERROR
-                    ? Center(child: Text("$_errorMessage"))
-                    : Center(
-                        child: CircularProgressIndicator(),
-                      ),
+            Flexible(
+              child: _stage == Stage.DONE
+                  ? PlaylistTree(_playlistList)
+                  : _stage == Stage.ERROR
+                      ? Center(child: Text("$_errorMessage"))
+                      : Center(
+                          child: CircularProgressIndicator(),
+                        ),
+            )
           ],
         ),
       ),
@@ -86,14 +82,20 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
   }
 }
 
-class PlaylistTreeItem extends StatelessWidget {
-  final Map data;
-  PlaylistTreeItem(this.data);
+class PlaylistTree extends StatelessWidget {
+  PlaylistTree(this.playlistList);
 
+  final List playlistList;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Text("${data['id']} - ${data['first_name']}"),
+    return ListView.builder(
+      itemCount: playlistList.length,
+      itemBuilder: (context, index) {
+        var data = playlistList[index];
+        return Container(
+          child: Text("${data['id']} - ${data['first_name']}"),
+        );
+      },
     );
   }
 }
